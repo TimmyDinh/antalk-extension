@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AnTalk Settings</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 40px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .close-tab-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      color: #aaa;
+      font-size: 13px;
+      padding: 6px 16px;
+      cursor: pointer;
+    }
+    .close-tab-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h1 img { width: 28px; height: 28px; }
+    h2 {
+      font-size: 14px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 24px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .field {
+      margin-bottom: 14px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: rgba(76,175,80,0.5);
+    }
+    select option { background: #1a1a2e; }
+    input[type="range"] {
+      padding: 4px 0;
+      background: transparent;
+      border: none;
+    }
+    .hint {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .row select { flex: 1; }
+    .arrow { color: #666; font-size: 16px; }
+    .save-btn {
+      padding: 10px 24px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .save-btn:hover { background: #43a047; }
+    .saved-msg {
+      display: inline-block;
+      margin-left: 12px;
+      color: #4CAF50;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .saved-msg.show { opacity: 1; }
+    .footer {
+      margin-top: 32px;
+      font-size: 11px;
+      color: #555;
+      text-align: center;
+    }
+    .footer a { color: #888; }
+  </style>
+</head>
+<body>
+  <button class="close-tab-btn" id="close-btn">&#10005; Close</button>
+  <h1>
+    <img src="../icons/icon48.png" alt="AnTalk">
+    AnTalk Settings
+  </h1>
+
+  <h2>Speech Recognition</h2>
+
+  <div class="field">
+    <label>STT Engine</label>
+    <select id="engine">
+      <option value="free">Free (Web Speech API)</option>
+      <option value="soniox">Soniox (API key required)</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Soniox API Key</label>
+    <input type="password" id="soniox-key" placeholder="Enter your Soniox API key">
+    <div class="hint">Get your key at <a href="https://console.soniox.com" target="_blank" style="color:#638cff">console.soniox.com</a>. Required for System audio mode.</div>
+  </div>
+
+  <h2>Languages</h2>
+
+  <div class="field">
+    <div class="row">
+      <select id="source-lang"></select>
+      <span class="arrow">&rarr;</span>
+      <select id="target-lang"></select>
+    </div>
+  </div>
+
+  <h2>Text-to-Speech</h2>
+
+  <div class="field">
+    <label>TTS Enabled</label>
+    <select id="tts-enabled">
+      <option value="true">On</option>
+      <option value="false">Off</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Voice Speed: <span id="speed-val">1.0</span>x</label>
+    <input type="range" id="tts-speed" min="0.5" max="2.0" step="0.1" value="1.0">
+  </div>
+
+  <div>
+    <button class="save-btn" id="save-btn">Save Settings</button>
+    <span class="saved-msg" id="saved-msg">Saved!</span>
+  </div>
+
+  <div class="footer">
+    AnTalk Extension v1.0.0 &mdash; <a href="mailto:thuyttding@gmail.com">thuyttding@gmail.com</a>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>
