@@ -26,7 +26,11 @@
   const settingsLink = document.getElementById('settings-link');
   const modeBtns = document.querySelectorAll('[data-mode]');
 
+  const displayBtns = document.querySelectorAll('[data-display]');
+  const displayHint = document.getElementById('display-hint');
+
   let currentMode = 'SYSTEM';
+  let currentDisplay = 'panel';
   let isRunning = false;
 
   // Populate language dropdowns
@@ -37,7 +41,7 @@
 
   // Load saved settings
   chrome.storage.local.get(
-    ['sourceLang', 'targetLang', 'sttEngine', 'audioMode'],
+    ['sourceLang', 'targetLang', 'sttEngine', 'audioMode', 'antalkDisplayMode'],
     (data) => {
       sourceLangSel.value = data.sourceLang || 'en';
       targetLangSel.value = data.targetLang || 'vi';
@@ -45,6 +49,10 @@
       if (data.audioMode) {
         currentMode = data.audioMode;
         updateModeUI();
+      }
+      if (data.antalkDisplayMode) {
+        currentDisplay = data.antalkDisplayMode;
+        updateDisplayUI();
       }
       checkModeEngineCompat();
     }
@@ -74,6 +82,22 @@
     modeHint.textContent = currentMode === 'SYSTEM'
       ? 'Captures audio from the current tab'
       : 'Uses your microphone';
+  }
+
+  // ─── Display Mode Selection ───
+  displayBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentDisplay = btn.dataset.display;
+      updateDisplayUI();
+      chrome.storage.local.set({ antalkDisplayMode: currentDisplay });
+    });
+  });
+
+  function updateDisplayUI() {
+    displayBtns.forEach(b => b.classList.toggle('active', b.dataset.display === currentDisplay));
+    displayHint.textContent = currentDisplay === 'subtitle'
+      ? 'Subtitles overlay on video'
+      : 'Floating overlay panel';
   }
 
   // ─── Engine Compatibility ───
@@ -134,6 +158,7 @@
       engine: engineSel.value,
       sourceLang: sourceLangSel.value,
       targetLang: targetLangSel.value,
+      displayMode: currentDisplay,
       tabId: tab.id
     };
 

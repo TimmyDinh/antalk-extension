@@ -105,6 +105,33 @@
     ttsBtn.classList.toggle('active', ttsEnabled);
   };
 
+  // ─── CC (Subtitle Mode) Button ───
+  const ccBtn = document.getElementById('cc-btn');
+  let subtitleModeActive = false;
+
+  // Load saved display mode
+  try {
+    chrome.storage.local.get(['antalkDisplayMode'], (data) => {
+      if (chrome.runtime.lastError) return;
+      if (data.antalkDisplayMode === 'subtitle') {
+        subtitleModeActive = true;
+        ccBtn.classList.add('active');
+      }
+    });
+  } catch (e) {}
+
+  ccBtn.onclick = () => {
+    subtitleModeActive = !subtitleModeActive;
+    ccBtn.classList.toggle('active', subtitleModeActive);
+    sendMsg({
+      type: 'TOGGLE_DISPLAY_MODE',
+      mode: subtitleModeActive ? 'subtitle' : 'panel'
+    });
+  };
+
+  // Listen for display mode changes (e.g. fallback if no video found)
+  // handled in the main onMessage listener below
+
   document.getElementById('clear-btn').onclick = () => clearAll();
 
   document.getElementById('copy-btn').onclick = () => {
@@ -276,6 +303,10 @@
       case 'ERROR':
         statusText.textContent = msg.message;
         dot.style.background = '#f44336';
+        break;
+      case 'DISPLAY_MODE_CHANGED':
+        subtitleModeActive = (msg.mode === 'subtitle');
+        ccBtn.classList.toggle('active', subtitleModeActive);
         break;
     }
   });

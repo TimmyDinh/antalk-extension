@@ -126,12 +126,24 @@ async function handleMessage(msg, sender) {
       chrome.runtime.openOptionsPage();
       return { ok: true };
 
+    case 'TOGGLE_DISPLAY_MODE':
+      // Forward to content script to switch between panel and subtitle mode
+      if (activeTabId) {
+        await chrome.tabs.sendMessage(activeTabId, {
+          type: 'SET_DISPLAY_MODE',
+          mode: msg.mode
+        });
+        chrome.storage.local.set({ antalkDisplayMode: msg.mode });
+      }
+      return { ok: true };
+
     // ─── Forward from offscreen → content script ───
     case 'STT_PARTIAL':
     case 'STT_FINAL':
     case 'TRANSLATION':
     case 'STATUS':
     case 'ERROR':
+    case 'DISPLAY_MODE_CHANGED':
       if (activeTabId) {
         try {
           await chrome.tabs.sendMessage(activeTabId, msg);
@@ -211,10 +223,12 @@ async function handleStart(config) {
   }
 
   // 4. Show overlay on the tab (with retries)
+  const displaySettings = await chrome.storage.local.get(['antalkDisplayMode']);
   await sendToTab(config.tabId, {
     type: 'SHOW_OVERLAY',
     mode: config.mode,
-    engine: config.mode === 'SYSTEM' ? 'soniox' : config.engine
+    engine: config.mode === 'SYSTEM' ? 'soniox' : config.engine,
+    displayMode: config.displayMode || displaySettings.antalkDisplayMode || 'panel'
   });
 
   return { ok: true };
