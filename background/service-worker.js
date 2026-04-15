@@ -180,7 +180,19 @@ async function handleStart(config) {
     antalkEngine: config.mode === 'SYSTEM' ? 'soniox' : config.engine
   });
 
-  // 1. Read API key from storage (SW has full access)
+  // 1. Ensure content script is injected
+  await ensureContentScript(config.tabId);
+
+  // 2. Show overlay FIRST so user gets immediate feedback
+  const displaySettings = await chrome.storage.local.get(['antalkDisplayMode']);
+  await sendToTab(config.tabId, {
+    type: 'SHOW_OVERLAY',
+    mode: config.mode,
+    engine: config.mode === 'SYSTEM' ? 'soniox' : config.engine,
+    displayMode: config.displayMode || displaySettings.antalkDisplayMode || 'panel'
+  });
+
+  // 3. Read API key from storage (SW has full access)
   let sonioxApiKey = '';
   try {
     const stored = await chrome.storage.local.get(['sonioxApiKey']);
@@ -189,47 +201,41 @@ async function handleStart(config) {
     console.warn('[AnTalk SW] Could not read API key:', e);
   }
 
-  // 2. Ensure content script is injected
-  await ensureContentScript(config.tabId);
-
-  // 3. Ensure offscreen document exists
+  // 4. Ensure offscreen document exists
   await ensureOffscreen();
 
-  // 4. Start STT — pass API key directly (offscreen may not have storage access)
-  if (config.mode === 'SYSTEM') {
-    const streamId = await chrome.tabCapture.getMediaStreamId({
-      targetTabId: config.tabId
-    });
-    console.log('[AnTalk SW] Got streamId for tab capture');
+  // 5. Start STT — wrapped in try/catch so errors show in overlay
+  try {
+    if (config.mode === 'SYSTEM') {
+      const streamId = await chrome.tabCapture.getMediaStreamId({
+        targetTabId: config.tabId
+      });
+      console.log('[AnTalk SW] Got streamId for tab capture');
 
-    forwardToOffscreen({
-      type: 'START_STT',
-      streamId,
-      mode: 'SYSTEM',
-      engine: 'soniox',
-      apiKey: sonioxApiKey,
-      sourceLang: config.sourceLang,
-      targetLang: config.targetLang
-    });
-  } else {
-    forwardToOffscreen({
-      type: 'START_STT',
-      mode: 'MIC',
-      engine: config.engine,
-      apiKey: sonioxApiKey,
-      sourceLang: config.sourceLang,
-      targetLang: config.targetLang
-    });
+      forwardToOffscreen({
+        type: 'START_STT',
+        streamId,
+        mode: 'SYSTEM',
+        engine: 'soniox',
+        apiKey: sonioxApiKey,
+        sourceLang: config.sourceLang,
+        targetLang: config.targetLang
+      });
+    } else {
+      forwardToOffscreen({
+        type: 'START_STT',
+        mode: 'MIC',
+        engine: config.engine,
+        apiKey: sonioxApiKey,
+        sourceLang: config.sourceLang,
+        targetLang: config.targetLang
+      });
+    }
+  } catch (err) {
+    console.error('[AnTalk SW] STT start failed:', err);
+    // Broadcast error so overlay iframe and content script both receive it
+    forwardToOffscreen({ type: 'ERROR', message: 'Failed to start: ' + err.message });
   }
-
-  // 4. Show overlay on the tab (with retries)
-  const displaySettings = await chrome.storage.local.get(['antalkDisplayMode']);
-  await sendToTab(config.tabId, {
-    type: 'SHOW_OVERLAY',
-    mode: config.mode,
-    engine: config.mode === 'SYSTEM' ? 'soniox' : config.engine,
-    displayMode: config.displayMode || displaySettings.antalkDisplayMode || 'panel'
-  });
 
   return { ok: true };
 }
